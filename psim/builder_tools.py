@@ -413,8 +413,7 @@ class ModelBuilder:
         where applicable.
         """
         if (p1 == p2):
-            raise ValueError(
-                'A surface cannot be formed from identical points.')
+            raise ValueError('A surface cannot be formed from identical points.')
         if (temp < 0.):
             raise ValueError('Surface temperature cannot be below 0.')
         if (start_time < 0. or duration < 0.):
