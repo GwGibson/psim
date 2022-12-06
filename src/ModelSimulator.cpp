@@ -44,7 +44,7 @@ void ModelSimulator::initPhononBuilders(std::vector<Cell>& cells, double t_eq, d
         const auto init_energy = cell.getInitEnergy(t_eq);
         if (const auto init_phonons = getPhonons(init_energy); init_phonons > 0) {
             total_phonons_ += init_phonons;
-            // Using max_phonons/2 since init_phonons generally have longer simulation times that emitted phonons
+            // Using max_phonons/2 since init_phonons generally take longer to simulate compared to emitted phonons
             if (const auto phonons = cb.totalPhonons(); phonons + init_phonons > BUILDER_MAX_PHONONS / 2 && phonons != 0) {
                 phonon_builders_.emplace_back(std::move(cb));
                 cb = CellOriginBuilder{};
@@ -235,5 +235,3 @@ void ModelSimulator::runUsingBuilders(double t_eq) {
         }, builderObj);
     });
 }
-
-
