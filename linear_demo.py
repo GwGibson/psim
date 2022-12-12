@@ -34,7 +34,7 @@ mp.visualize([json_filepath], square_axes=False)
 
 # Once the JSON file has been processed we can plot the results
 # ss_{filename}.txt -> simulation results
-mp.plot(filename, results_filepath, square_axes=False) # Not so useful for this geometry
+mp.plot(json_filepath, results_filepath, square_axes=False) # Not so useful for this geometry
 
 # Plotly linear plotter expects the midpoint of each cell as an array
 axis1 = [i for i in range(cell_x_len//2, cell_x_len*num_cells,cell_x_len)] 
