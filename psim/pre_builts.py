@@ -272,7 +272,7 @@ def layered_kinked(angle: float, l: int, spec: float, t_high: float,
     by = 2 * l / 3
     dy = by/num_rows
     
-    kl = 3
+    kl = 2
     
     top_tri_length = by * tan 
     kink_length = kl*l - by/2*tan - by/2*tan2
