@@ -29,8 +29,8 @@ for angle in angles:
 plot_file = f'kinked_demo_{l}_35_spec.json'
 json_filepath = f'demo_json/{plot_file}'
 results_filepath = f'demo_results/ss_{plot_file[:-4]}txt'
-mp.plot(plot_file, results_filepath, square_axes=False)
+mp.plot(json_filepath, results_filepath, square_axes=False)
 
 # Adjusting the flux scaling
-mp.plot(plot_file, results_filepath, square_axes=False,
+mp.plot(json_filepath, results_filepath, square_axes=False,
         fxmax=2.5e9, fxmin=0, fymax=1.45e9, fymin=-1.45e9)
