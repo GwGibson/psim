@@ -5,8 +5,14 @@
 
 using Line = Geometry::Line;
 
-CompositeSurface::CompositeSurface(Surface&& main_surface)
-: main_surface_{main_surface} {}
+CompositeSurface::CompositeSurface(Surface&& main_surface) : main_surface_{main_surface} {}
+
+
+void CompositeSurface::updateEmitSurfaceTables() noexcept {
+    for (auto& es : emit_sub_surfaces_) {
+        es.updateTable();
+    }
+}
 
 bool CompositeSurface::addEmitSurface(const Line& surface_line, Cell& cell, const Material& mat, double temp,
                                       int norm_sign, double duration, double start_time) {

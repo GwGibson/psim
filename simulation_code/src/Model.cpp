@@ -8,25 +8,35 @@
 
 namespace {
     // Maximum number of simulations resets
-    static constexpr std::size_t MAX_ITERS{10};
+    constexpr std::size_t MAX_ITERS{7};
     // Threshold (percentage*100) of sensors that must be stable for the system to be considered stable
-    static constexpr std::size_t RESET_THRESHOLD{90};
+    constexpr std::size_t RESET_THRESHOLD{90};
     // Threshold (percentage*1000) that t_eq must be within between runs for the system to be considered stable
     // 5 means t_eq must be within 0.5% of previous t_eq
-    static constexpr std::size_t TEQ_THRESHOLD{5};
+    constexpr std::size_t TEQ_THRESHOLD{5};
+    // Epsilon on the temperature bounds that are to be used when using a numerical inversion to calculate
+    // the temperature of each sensor based on the energy associated with them
+    constexpr std::size_t TEMP_BOUND_EPS{10};
+    constexpr std::size_t PHASOR_TEMP_BOUND_EPS{TEMP_BOUND_EPS * 100};
+    // Percentage of measurement steps that will be used for steady state calculations
+    constexpr double SS_STEPS_PERCENT{0.1};
+    // Temperature intervals to create distribution tables. A smaller interval may increase precision
+    // but will take up more memory. Primarily a concern for transient simulations
+    constexpr float TEMP_INTERVAL{1.};
 }
 
 using Point = Geometry::Point;
 using Line = Geometry::Line;
 
 Model::Model(std::size_t num_cells, std::size_t num_sensors, std::size_t measurement_steps, std::size_t num_phonons,
-             double simulation_time, double t_eq)
+             double simulation_time, double t_eq, bool phasor_sim)
         : num_cells_{num_cells},
           measurement_steps_{measurement_steps},
           simulation_time_{simulation_time},
           num_phonons_{num_phonons},
           t_eq_{t_eq},
-          simulator_{measurement_steps, simulation_time},
+          phasor_sim_{phasor_sim},
+          simulator_{measurement_steps, simulation_time, phasor_sim},
           outputManager_{},
           interpreter_{},
           addMeasurementMutex_{std::make_unique<std::mutex>()}
@@ -39,11 +49,20 @@ void Model::setSimulationType(SimulationType type, std::size_t step_interval) {
     sim_type_ = type;
     // Throwing here so the user doesn't run a full simulation only to realize after that they
     // are using the incorrect settings.
-    if ( (type == SimulationType::Transient || type == SimulationType::Periodic) && step_interval == 0) {
-        throw std::runtime_error(std::string("Step interval of 0 is invalid for transient and periodic simulations.\n"));
+    if (type == SimulationType::Transient || type == SimulationType::Periodic) {
+        start_step_ = static_cast<std::size_t>(measurement_steps_ - measurement_steps_ * SS_STEPS_PERCENT);
+        if (step_interval == 0) {
+            throw std::runtime_error(std::string("Step interval of 0 is invalid for transient and periodic simulations.\n"));
+        }
     }
-    if (type == SimulationType::SteadyState && step_interval > 0) {
-        throw std::runtime_error(std::string("Step interval > 0 is invalid for steady-state simulations\n"));
+    if ( (type == SimulationType::Transient && t_eq_ == 0) ) {
+        throw std::runtime_error(std::string("Transient simulations must be run using the deviational approach.\n"));
+    }
+    if (type == SimulationType::SteadyState) {
+        simulator_.setStepAdjustment(static_cast<std::size_t>(measurement_steps_ - measurement_steps_ * SS_STEPS_PERCENT));
+        if (step_interval > 0) {
+            throw std::runtime_error(std::string("Step interval > 0 is invalid for steady-state simulations\n"));
+        }
     }
     outputManager_.setStepInterval(step_interval);
 }
@@ -62,7 +81,9 @@ void Model::addSensor(std::size_t ID, const std::string& material_name, double t
         return s.getID() == ID;
     });
     if (sensor == std::end(sensors_)) {
-        sensors_.emplace_back(Sensor{ID, materials_.at(material_name), measurement_steps_, t_init, type});
+        const std::size_t steps_to_record = (type == Sensor::SimulationType::SteadyState)
+                ? static_cast<std::size_t>(measurement_steps_ * SS_STEPS_PERCENT) : measurement_steps_;
+        sensors_.emplace_back(Sensor{ID, materials_.at(material_name), type, steps_to_record, t_init});
     } else {
         throw std::runtime_error(std::string("Sensor with this ID already exists\n"));
     }
@@ -81,7 +102,7 @@ void Model::addCell(Geometry::Triangle&& triangle, std::size_t sensor_ID, double
             // TODO: Misses cases when all 3 points of a cell are on the edges of another cell
             inc_cell.validate(cell);
             inc_cell.findTransitionSurface(cell);
-        } else if (++identical_cells == 2) {
+        } else if (++identical_cells == 2) { // else { ++identical_cells; if (identical_cells == 2) { throw } }
             throw std::runtime_error(std::string("Duplicate cell detected.\n"));
         }
     }
@@ -115,7 +136,8 @@ bool Model::setEmitSurface(const Point& p1, const Point& p2, double temp, double
 
 void Model::runSimulation() {
     // TODO: could run checks here to verify there is at least 1 sensor/cell etc.
-    setTemperatureBounds();
+    const auto [min, max] = setTemperatureBounds();
+    initializeMaterialTables(min, max);
 
     auto refresh = [this]() {
         auto total_energy = getTotalInitialEnergy();
@@ -131,9 +153,8 @@ void Model::runSimulation() {
     while (reset_required && ++iter <= MAX_ITERS) {
         simulator_.initPhononBuilders(cells_, t_eq_, energy_per_phonon);
         simulator_.runSimulation(t_eq_);
-
         // Check if sensor temperatures are stable
-        if (const auto new_t_eq = resetRequired(); new_t_eq && iter < MAX_ITERS) {
+        if (const auto new_t_eq = resetRequired(); new_t_eq && iter < MAX_ITERS && !phasor_sim_) {
             reset();
             t_eq_ = *new_t_eq;
             std::cout << "system not stable\n";
@@ -141,19 +162,17 @@ void Model::runSimulation() {
         } else {
             reset_required = false;
         }
-
         std::tie(total_energy, energy_per_phonon) = refresh();
-
     }
     if (iter >= MAX_ITERS) { std::cout << "System did not stabilize!!\n"; } // Should log this or include in output title
     storeResults();
 }
 
-void Model::exportResults(const fs::path& filepath) const {
-    outputManager_.steadyStateExport(filepath);
+void Model::exportResults(const fs::path& filepath, double time) const {
+    outputManager_.steadyStateExport(filepath, time);
     // If transient or periodic simulation -> do periodic export (This is useless for ss simulation that require resets)
     if (sim_type_ != SimulationType::SteadyState) {
-        outputManager_.periodicExport(filepath);
+        outputManager_.periodicExport(filepath, time);
     }
 }
 
@@ -172,8 +191,7 @@ double Model::getTotalInitialEnergy() const noexcept {
                                [&](const auto& cell) { return cell.getInitEnergy(t_eq_) + cell.getEmitEnergy(t_eq_); });
 }
 
-void Model::setTemperatureBounds() noexcept {
-    constexpr double temp_eps{10.};
+std::pair<double, double> Model::setTemperatureBounds() noexcept {
     std::vector<double> temperatures;
     for (const auto& cell : cells_) {
         temperatures.push_back(cell.getInitTemp());
@@ -184,8 +202,24 @@ void Model::setTemperatureBounds() noexcept {
         }
     }
     const auto [min, max] = std::minmax_element(std::cbegin(temperatures), std::cend(temperatures));
-    interpreter_.setBounds(*max+temp_eps, std::max(*min-temp_eps, 0.));
+    const auto bound = (phasor_sim_) ? PHASOR_TEMP_BOUND_EPS : TEMP_BOUND_EPS;
+    interpreter_.setBounds(*max+bound, std::max(*min-bound, 0.));
+    return {*min, *max};
 }
+
+
+void Model::initializeMaterialTables(double low_temp, double high_temp) {
+    for (auto& element : materials_) {
+        element.second.initializeTables(low_temp, high_temp, TEMP_INTERVAL);
+    }
+    for (auto& sensor : sensors_) {
+        sensor.updateTables();
+    }
+    for (auto& cell : cells_) {
+        cell.updateEmitTables();
+    }
+}
+
 
 double Model::avgTemp() const {
     const double total_area = std::transform_reduce(std::execution::seq, std::cbegin(sensors_), std::cend(sensors_), 0.,
@@ -213,7 +247,7 @@ std::optional<double> Model::resetRequired() noexcept {
     for (auto& sensor : sensors_) {
         if (sim_type_ != SimulationType::Transient) {
             // The average temperature of the last 10% of measurement steps
-            if (sensor.resetRequired(interpreter_.getFinalTemp(sensor))) { ++stable_sensors; }
+            if (sensor.resetRequired(interpreter_.getFinalTemp(sensor, start_step_))) { ++stable_sensors; }
         } else {
             // Get the temperature at each measurement step
             if (sensor.resetRequired(0., interpreter_.getFinalTemps(sensor))) { ++stable_sensors; }
@@ -222,11 +256,17 @@ std::optional<double> Model::resetRequired() noexcept {
     std::cout << "Stable sensors: " << stable_sensors << '\n';
     const auto new_t_eq = (t_eq_ == 0. || sim_type_ == SimulationType::Transient) ? t_eq_ : avgTemp();
     // if either the sensors or t_eq are not stable, return true indicated a reset is required
-    return (stable_sensors * 100 / total_sensors < RESET_THRESHOLD) || t_diff(new_t_eq, t_eq_) ? std::make_optional(new_t_eq)
-                                                                                               : std::nullopt;
+    return (stable_sensors * 100 / total_sensors < RESET_THRESHOLD) || t_diff(new_t_eq, t_eq_)
+            ? std::make_optional(new_t_eq) : std::nullopt;
 }
 
 void Model::reset() noexcept {
     simulator_.reset();
-    for (auto& sensor : sensors_) { sensor.reset(); }
+    if (sim_type_ == SimulationType::Transient) {
+        for_each(std::execution::par, std::begin(sensors_), std::end(sensors_),
+                 [](auto& sensor) { sensor.reset(); });
+    }
+    else {
+        for (auto& sensor : sensors_) { sensor.reset(); }
+    }
 }

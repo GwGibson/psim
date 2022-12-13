@@ -1,6 +1,7 @@
 #include "Sensor.h"
 
-Sensor::Sensor(std::size_t ID, const Material& material, std::size_t num_measurements, double t_init, SimulationType type)
+Sensor::Sensor(std::size_t ID, const Material& material, SimulationType type,
+               std::size_t num_measurements, double t_init)
         : ID_{ID},
           updateMutex_{std::make_unique<std::mutex>()}
 {
@@ -21,8 +22,12 @@ Sensor::Sensor(std::size_t ID, const Material& material, std::size_t num_measure
     inc_flux_.resize(num_measurements);
 }
 
-void Sensor::initialUpdate(Phonon& p, const Material::Table* table) const noexcept {
+void Sensor::initialUpdate(Phonon& p, const Material::Table& table) const noexcept {
     controller_->initialUpdate(p, table);
+}
+
+void Sensor::initialUpdate(Phonon& p) const noexcept {
+    controller_->initialUpdate(p);
 }
 
 void Sensor::scatterUpdate(Phonon &p) const noexcept {
@@ -33,7 +38,6 @@ bool Sensor::resetRequired(double t_final, std::vector<double>&& final_temps) no
     return controller_->resetRequired(t_final, std::move(final_temps));
 }
 
-// TODO: Make this faster somehow - major bottleneck
 void Sensor::updateHeatParams(const Phonon& p, std::size_t step) noexcept {
     const auto sign = p.getSign();
     const auto& [vx, vy] = p.getVelVector();
@@ -54,4 +58,3 @@ void Sensor::reset() noexcept {
     // Reset incoming energies to 0.
     std::fill(std::begin(inc_energy_), std::end(inc_energy_), 0);
 }
-

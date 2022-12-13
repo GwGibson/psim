@@ -57,6 +57,14 @@ double Cell::getEmitEnergy(double t_eq) const noexcept {
     return emit_energy;
 }
 
+
+void Cell::updateEmitTables() noexcept {
+    for (auto& surface : boundaries_) {
+        surface.updateEmitSurfaceTables();
+    }
+}
+
+
 void Cell::updateHeatParams(const Phonon& p, std::size_t step) noexcept {
     sensor_.updateHeatParams(p, step);
 }
@@ -130,7 +138,6 @@ bool Cell::operator==(const Cell& rhs) const {
 bool Cell::operator!=(const Cell& rhs) const {
     return !(rhs == *this);
 }
-
 
 IntersectError::IntersectError(Geometry::Triangle existing, Geometry::Triangle incoming)
     : existing_{std::move(existing)}, incoming_{std::move(incoming)}

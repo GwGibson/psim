@@ -11,9 +11,10 @@
 #include "OutputManager.h"
 #include "Sensor.h"
 
-void OutputManager::steadyStateExport(const fs::path& filepath) const {
+void OutputManager::steadyStateExport(const fs::path& filepath, double time) const {
     std::ofstream output{adjustPath(filepath, "ss_").string(), std::ios_base::trunc}; // Overwrites existing file
-    output << "Steady State Results from " << filepath.filename() << " @ " + getCurrentDateTime() << '\n';
+    output << "Steady State Results from " << filepath.filename() << " @ " + getCurrentDateTime()
+           << " - Time Taken " << time << "[s]\n";
     for (const auto& measurement : measurements_) {
         output << measurement.t_steady << ' ' << measurement.std_t_steady << ' '
                << measurement.x_flux << ' ' << measurement.std_x_flux << ' '
@@ -24,14 +25,14 @@ void OutputManager::steadyStateExport(const fs::path& filepath) const {
 
 // This is useless for a steady-state simulation since the system does not really evolve in the final run
 // and previous runs may not provide an 'accurate' picture as the scattering rates etc. will be incorrect.
-void OutputManager::periodicExport(const fs::path& filepath) const {
+void OutputManager::periodicExport(const fs::path& filepath, double time) const {
     std::ofstream output{adjustPath(filepath, "per_").string(), std::ios_base::trunc}; // Overwrites existing file
     output << "Periodic Results in " << step_interval_ << " step intervals from " << filepath.filename()
-           << " @ " + getCurrentDateTime() << '\n';
+           << " @ " + getCurrentDateTime() << " - Time Taken " << time << "[s]\n";
     const std::size_t num_sensors = measurements_.size();
     const std::size_t measurement_steps = measurements_.back().final_temps.size();
-    for (std::size_t step = 1; step < measurement_steps-step_interval_; step += step_interval_) { // Skip 0th step
-        output << step << '\n';
+    for (std::size_t step = 0; step < measurement_steps-step_interval_+1; step += step_interval_) {
+        output << static_cast<std::size_t>(step + step_interval_ / 2) << '\n';
         output << num_sensors << '\n';
         for (const auto& measurement : measurements_) { // Measurement data from each sensor
             // Get average temperature over the number of step_intervals

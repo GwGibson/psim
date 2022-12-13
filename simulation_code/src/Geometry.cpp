@@ -10,7 +10,7 @@ using Line = Geometry::Line;
 using Triangle = Geometry::Triangle;
 using PointPair = Geometry::PointPair;
 
-namespace { static constexpr double GEOEPS {10e-9}; }
+namespace { constexpr double GEOEPS {10e-9}; }
 
 [[nodiscard]] static PointPair findBoundingBox(const Line& line) noexcept;
 [[nodiscard]] static bool boxesIntersect(const PointPair& lhs, const PointPair& rhs) noexcept;
@@ -35,6 +35,10 @@ Point Geometry::operator-(const Point& lhs, const Point& rhs) {
 bool Geometry::Point::operator==(const Point& rhs) const {
     return (x <= rhs.x + GEOEPS && x >= rhs.x - GEOEPS) &&
            (y <= rhs.y + GEOEPS && y >= rhs.y - GEOEPS);
+}
+
+bool Point::operator!=(const Point &rhs) const {
+    return !(rhs == *this);
 }
 
 Line::Line(Point p1, Point p2)
@@ -118,7 +122,6 @@ std::optional<Point> Line::getIntersection(const Line& other) const noexcept {
             poi = {pt1.x, m*pt1.x + b};
         }
     };
-	
     if (intersects(other)) { // If the line segments intersect, find the poi
         const auto& [t_p1, t_p2] = getPoints();
         const auto& [o_p3, o_p4] = other.getPoints();
@@ -229,15 +232,27 @@ bool Geometry::Triangle::isClockwise() const noexcept {
     const auto& [p3_x, p3_y] = std::pair{p1.x - p3.x, p1.y + p3.y};
     return p1_x * p1_y + p2_x * p2_y + p3_x * p3_y >= 0.;
 }
-
+#if 0
 Point Triangle::getRandPoint(double r1, double r2) const noexcept {
     const double root_r1 = sqrt(r1);
     const auto f1 = 1.-root_r1;
     const auto f2 = root_r1 * (1.-r2);
     const auto f3 = root_r1 * r2;
-    return {f1*p1.x + f2*p2.x + f3*p3.x, f1*p1.y + f2*p2.y + f3*p3.y};
+    const auto x = f1*p1.x + f2*p2.x + f3*p3.x;
+    const auto y = f1*p1.y + f2*p2.y + f3*p3.y;
+    return {x,y};
 }
-
+#else
+Point Triangle::getRandPoint(double r1, double r2) const noexcept {
+    if (r1 + r2 > 1.) {
+        r1 = 1 - r1;
+        r2 = 1 - r2;
+    }
+    const auto x = p1.x + (p2.x - p1.x) * r1 + (p3.x - p1.x) * r2;
+    const auto y = p1.y + (p2.y - p1.y) * r1 + (p3.y - p1.y) * r2;
+    return {x,y};
+}
+#endif
 bool Triangle::operator==(const Triangle& rhs) const {
     auto contains = [](const auto& t, const auto& p) {
         return (p == t.p1 || p == t.p2 || p == t.p3);
@@ -332,9 +347,6 @@ double getSlope(const Point& p1, const Point& p2) noexcept {
     return (p1.x == p2.x) ? 0. : (p1.y - p2.y) / (p1.x - p2.x);
 }
 
-// What about a vertical line that is not at y = 0?
-// Is handled in getIntersection method but should maybe use 
-// numeric_limits::max and numeric_limits::min for slope and y-int of vert line
 double getIntercept(double x, double y, double slope) noexcept {
     return y - slope * x;
 }

@@ -16,6 +16,11 @@ Surface::Surface(Line surface_line, Cell& cell, double specularity, int norm_sig
       specularity_{specularity}
 {}
 
+/**
+ * Redirects the incoming phonon to a random direction
+ * that points away from the impacted surface (Diffuse scatter)
+ * @param p - The phonon that interacts with the surface
+ */
 void Surface::redirectPhonon(Phonon& p) const noexcept {
     const auto& [nx, ny] = normal_;
     const auto rand = urand();
@@ -39,7 +44,8 @@ void Surface::boundaryHandlePhonon(Phonon& p) const noexcept {
 EmitSurface::EmitSurface(Line surface_line, Cell& cell, double specularity, int norm_sign,
                          const Material& mat, double temp, double duration, double start_time)
     : Surface{std::move(surface_line), cell, specularity, norm_sign},
-      temp_{temp}, emit_table_{mat.emitTable(temp)}, duration_{duration}, start_time_{start_time} {}
+      temp_{temp}, duration_{duration}, start_time_{start_time}, material_{mat}
+    {}
 
 void EmitSurface::handlePhonon(Phonon& p, double step_time) const noexcept {
     const auto phonon_time = p.getLifeStep() * step_time;
@@ -53,7 +59,7 @@ double EmitSurface::getPhononTime() const noexcept {
 
 void TransitionSurface::handlePhonon(Phonon& p) const noexcept {
     // Material is the same between sensor areas
-    if (p.getCell()->getMaterialID() == cell_.getMaterialID()) {
+    if (p.getCellMaterialID() == cell_.getMaterialID()) {
         p.setCell(&cell_);
     } else { // Phonon is passing from one material to another
         const auto& material = cell_.getMaterial();
@@ -73,7 +79,7 @@ void TransitionSurface::handlePhonon(Phonon& p) const noexcept {
         auto isTransmitted = [this](const Phonon& p){
             const auto freq_index = p.getFreqIndex();
             const auto c1 = cell_.getHeatCapacityAtFreq(freq_index);
-            const auto c2 = p.getCell()->getHeatCapacityAtFreq(freq_index);
+            const auto c2 = p.getCellHeatCapacityAtFreq(freq_index);
             return false;
         };
 
@@ -89,4 +95,3 @@ void TransitionSurface::handlePhonon(Phonon& p) const noexcept {
         }
     }
 }
-
