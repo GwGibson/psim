@@ -115,7 +115,7 @@ struct TableData {
       cumul_sum{cumul_sum}
     {}
 
-    std::array<std::pair<double, double>, 1000> table;
+    std::array<std::pair<double, double>, Material::NUM_FREQ_BINS> table;
     double cumul_sum {0.};
 };
 
