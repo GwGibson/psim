@@ -30,7 +30,7 @@ public:
     [[nodiscard]] static std::pair<std::size_t, Polar> freqIndex(const Table& dist) noexcept;
 
     [[nodiscard]] const Array& getFrequencies() const noexcept { return frequencies_; }
-    // Returns the frequency index at the given frequency. Might be off by 1 in some cases. No error checking.
+    // Returns the frequency index at the given frequency. No error checking.
     [[nodiscard]] std::size_t getFreqIndex(double frequency) const noexcept;
     [[nodiscard]] double getFreq(std::size_t index) const noexcept;
     [[nodiscard]] double getVel(std::size_t index, Polar polar) const noexcept;
