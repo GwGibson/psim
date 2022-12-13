@@ -3,6 +3,7 @@
 
 #include "Material.h"
 
+// Abstract class is perhaps not necessary here
 class SensorController {
 public:
     SensorController(const Material& material, double t_init, std::size_t num_measurements=0);
@@ -14,7 +15,9 @@ public:
     [[nodiscard]] virtual double getInitTemp() const noexcept = 0;
     [[nodiscard]] virtual double getSteadyTemp(std::size_t step) const noexcept = 0;
 
-    void initialUpdate(Phonon& p, const Material::Table* table) const noexcept;
+    void initialUpdate(Phonon& p, const Material::Table& table) const noexcept;
+    void initialUpdate(Phonon& p) const noexcept;
+    virtual void updateTables();
     virtual void scatterUpdate(Phonon& p) const noexcept;
     /**
      * Returns true if the input sensor's temperature has not significantly changed over the course of the simulation
@@ -30,12 +33,12 @@ protected:
     const std::size_t num_measurements_; // For transient surfaces only
 
     double t_steady_{0.}; // Steady state temperature of the cell. Used to set the energy tables & heat_capacity_
-    double heat_capacity_{0.};
-    Material::Table base_table_;
-    Material::Table scatter_table_;
+    double heat_capacity_{0.}; // Energy per unit volume in full simulations - heat capacity in deviational simulations
+    const Material::Table* base_table_{nullptr};
+    const Material::Table* scatter_table_{nullptr};
 
     // Transient sensor containers -> not needed for steady state or periodic simulations
-    std::vector<Material::Table> scatter_tables_; // Transient controllers need a scatter table for each measurement step
+    std::vector<const Material::Table*> scatter_tables_; // Transient controllers need a scatter table for each measurement step
     std::vector<double> heat_capacities_;
     std::vector<double> steady_temps_;
 };
@@ -45,6 +48,8 @@ public:
     using SensorController::SensorController;
 
     [[nodiscard]] double getHeatCapacity(std::size_t) const noexcept override { return heat_capacity_; }
+    // This is not a bug -> Init temp for next iteration is the steady temp of the previous iteration
+    // Not interested in periodic progression of the system here, will converge faster this way
     [[nodiscard]] double getInitTemp() const noexcept override { return t_steady_; }
     [[nodiscard]] double getSteadyTemp(std::size_t) const noexcept override { return t_steady_; }
 
@@ -56,6 +61,7 @@ public:
     using SensorController::SensorController;
 
     [[nodiscard]] double getHeatCapacity(std::size_t) const noexcept override { return heat_capacity_; }
+    // Need to restore sensors to their initial temperatures to see the periodic progression of the system
     [[nodiscard]] double getInitTemp() const noexcept override { return t_init_; }
     [[nodiscard]] double getSteadyTemp(std::size_t) const noexcept override { return t_steady_; }
 

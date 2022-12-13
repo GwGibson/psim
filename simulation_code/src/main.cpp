@@ -11,8 +11,9 @@ int main(int argc, char* argv[]) {
                     auto &m = *model;
                     Timer timer;
                     m.runSimulation();
-                    timer.time();
-                    m.exportResults(filepath);
+                    const auto time = timer.get_time_diff();
+                    std::cout << "Time Taken: " << time << "[s]\n";
+                    m.exportResults(filepath, time);
                 } else {
                     std::cerr << "There was an error reading the data from the file at " << filepath << '\n';
                 }
@@ -23,7 +24,5 @@ int main(int argc, char* argv[]) {
     } else {
         std::cout << "Need filenames\n";
     }
-
     std::cout << "done\n";
 }
-

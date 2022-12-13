@@ -37,4 +37,5 @@ struct FuncTimer {
         return std::chrono::duration_cast<Time>(end - start);
     }
 };
+
 #endif //GEOMETRY_TIMER_H

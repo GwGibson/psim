@@ -50,11 +50,13 @@ public:
     void handlePhonon(Phonon& p, double step_time) const noexcept;
     [[nodiscard]] double getEmitDuration() const noexcept { return duration_; }
     [[nodiscard]] double getTemp() const noexcept { return temp_; }
-    [[nodiscard]] const Material::Table* getTable() const noexcept { return &emit_table_; }
+    [[nodiscard]] const Material::Table& getTable() const noexcept { return *emit_table_; }
     [[nodiscard]] double getPhononTime() const noexcept;
+    void updateTable() { emit_table_ = material_.emitTable(temp_); }
 protected:
+    const Material& material_;
     const double temp_;
-    const Material::Table emit_table_;
+    const Material::Table* emit_table_{nullptr};
     const double duration_;
     const double start_time_;
 };
