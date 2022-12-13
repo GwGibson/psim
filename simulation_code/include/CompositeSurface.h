@@ -16,6 +16,7 @@ public:
     [[nodiscard]] const Line& getSurfaceLine() const noexcept { return main_surface_.getSurfaceLine(); }
     [[nodiscard]] bool contains(const Point& point) const noexcept { return main_surface_.contains(point); }
     [[nodiscard]] const auto& getEmitSurfaces() const noexcept { return emit_sub_surfaces_; }
+    [[nodiscard]] void updateEmitSurfaceTables() noexcept;
 
     [[nodiscard]] bool addEmitSurface(const Line&, Cell&, const Material&, double temp, int norm_sign,
                                       double duration, double start_time);
@@ -26,7 +27,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const CompositeSurface& surface);
 private:
     const Surface main_surface_;
-    // TODO: std::variant<EmitSurface, TransitionSurface> seems like it would be ideal here
+    // TODO: std::variant<EmitSurface, TransitionSurface> seems like it would be good here
     // Don't see a compelling reason to use a heterogeneous container here.
     // Number of sub-surfaces should not increase in the foreseeable future.
     std::vector<TransitionSurface> transition_sub_surfaces_;

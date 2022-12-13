@@ -13,7 +13,7 @@ struct SensorMeasurements;
 class OutputManager {
 public:
     OutputManager() = default;
-    void steadyStateExport(const fs::path& filepath) const;
+    void steadyStateExport(const fs::path& filepath, double time) const;
     /**
      * Exports results from each measurement step so the evolution of the system can be visualized.
      * Step intervals of 1 will write every measurement to file. If there are 100 measurements,
@@ -21,9 +21,9 @@ public:
      * the measurements to file. Step intervals of 10 with 100 measurements -> 10 * num_sensors entries. First entry is
      * the avg of steps 1-10, second is avg of steps 11-20, etc.
      * @param filepath - path and filename where the results will be written - existing file will be overwritten
-     * @param step_intervals - The distance between steps. If > 1, the average of the measurements is used.
+     * @param time- The time taken to run the simulation.
      */
-    void periodicExport(const fs::path& filepath) const;
+    void periodicExport(const fs::path& filepath, double time) const;
     void addMeasurement(SensorMeasurements&& measurement) noexcept;
     void sortMeasurements() noexcept;
     void setStepInterval(std::size_t interval) noexcept { step_interval_ = interval; }
