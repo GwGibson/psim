@@ -8,7 +8,7 @@ namespace Utils {
     // Generates a random number from a uniform distribution over [0,1].
     inline double urand() noexcept {
         static std::random_device rd;
-        static thread_local std::mt19937 generator(rd());
+        static thread_local std::mt19937 generator(10);
         std::uniform_real_distribution<double> dist(0., std::nextafter(1.0, 2.0));
         return dist(generator);
     }
@@ -18,7 +18,7 @@ namespace Utils {
     // Can use eType(enum) instead of std::static_cast<std::size_t>(enum).
     // Must be constexpr to work with std::get when using variants
     template<typename E>
-    constexpr auto eType(E enumerator) noexcept { return static_cast<std::underlying_type_t<E>>(enumerator); }
+    constexpr auto toInteger(E enumerator) noexcept { return static_cast<std::underlying_type_t<E>>(enumerator); }
 
     // Custom to function to emulate python zip functionality
     // General implementation
@@ -49,7 +49,6 @@ namespace Utils {
         }
         return result;
     }
-
 }
 
 #endif //GEOMETRY_UTILS_H

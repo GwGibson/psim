@@ -29,9 +29,10 @@ public:
      * increases simulation time.
      * @param simulation_time - The duration of the simulation
      * @param t_eq - The linearization (equilibrium) temperature of the system - 0 indicates a full simulation
+     * @param phasor_sim - True -> phonons have uniform direction & velocity & no scattering
      */
     Model(std::size_t num_cells, std::size_t num_sensors, std::size_t measurement_steps, std::size_t num_phonons,
-          double simulation_time, double t_eq);
+          double simulation_time, double t_eq, bool phasor_sim=false);
     /**
      * @param type - The type of simulation. Default is steady state.
      * @param step_interval - For periodic and transient simulations only. The distance between steps for which
@@ -44,7 +45,7 @@ public:
      * Adds a Material object to the model. A Material is linked to sensor objects which it turn specifies how the
      * cells attached to those sensors should act.
      * @param material_name - A string representing the name of the material
-     * @param material - An object that specifies the property of the material
+     * @param material - An object that specifies the properties of the material
      */
     void addMaterial(const std::string& material_name, Material material);
     /**
@@ -84,8 +85,8 @@ public:
      * Throws if the input line overlaps with an existing transition or existing emitting surface or if start_times
      * < 0 or >= simulation_time_ and if duration is < 0 or >= simulation_time_-start_time. Also throws if a transient surface
      * is specified but the simulation type is not transient.
-     * @param p1 - p1 of a line segment
-     * @param p2 - p2 of a line segment
+     * @param p1 - point 1 of a line segment
+     * @param p2 - point 2 of a line segment
      * @param temp - The temperature of the emitting surface
      * @param duration - The duration of time the transient surface will emit phonons
      * @param start_time - The amount of time into the simulation at which this surface starts emitting phonons
@@ -95,7 +96,7 @@ public:
     [[nodiscard]] bool setEmitSurface(const Point& p1, const Point& p2, double temp, double duration, double start_time);
 
     void runSimulation();
-    void exportResults(const fs::path& filepath) const;
+    void exportResults(const fs::path& filepath, double time) const;
 private:
     SimulationType sim_type_{SimulationType::SteadyState};
     const std::size_t num_cells_;
@@ -103,6 +104,8 @@ private:
     const double simulation_time_;
     const std::size_t num_phonons_;
     double t_eq_{0.}; // Changes as the system evolves between runs
+    const bool phasor_sim_;
+    std::size_t start_step_ {0}; // 0 for SS simulations -> measurements vectors are scaled down in the sensors
 
     ModelSimulator simulator_;
     OutputManager outputManager_;
@@ -124,7 +127,8 @@ private:
      * Find the maximum and minimum possible temperatures of the system. These are used as bounds for the numerical
      * inversions.
      */
-    void setTemperatureBounds() noexcept;
+    [[nodiscard]] std::pair<double, double> setTemperatureBounds() noexcept;
+    void initializeMaterialTables(double low_temp, double high_temp);
     [[nodiscard]] double avgTemp() const;
     void storeResults() noexcept;
     /**

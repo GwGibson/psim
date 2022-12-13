@@ -6,7 +6,6 @@
 #include <array>
 
 namespace Geometry {
-
     struct Vector2D {
         constexpr Vector2D(double x, double y) noexcept: x{x}, y{y} {}
         double x;
@@ -19,6 +18,8 @@ namespace Geometry {
         double y;
 
         bool operator==(const Point& rhs) const;
+        bool operator!=(const Point &rhs) const;
+
     };
     std::ostream& operator<<(std::ostream& os, const Point& point);
     Point operator-(const Point& lhs, const Point& rhs);

@@ -7,7 +7,7 @@
 #include "CompositeSurface.h"
 #include "Sensor.h"
 
-// TODO - Inherit from Geometry::Triangle & Sensor?
+// TODO - Inherit from Geometry::Triangle? Composition seems best for Sensor but requires a lot of forwarding
 class Cell {
 public:
     using Point = Geometry::Point;
@@ -33,8 +33,10 @@ public:
     [[nodiscard]] double getInitEnergy(double t_eq) const noexcept;
     [[nodiscard]] double getEmitEnergy(double t_eq) const noexcept;
 
-    void initialUpdate(Phonon& p, const Material::Table* table) const noexcept { return sensor_.initialUpdate(p, table); }
+    void initialUpdate(Phonon& p, const Material::Table& table) const noexcept { return sensor_.initialUpdate(p, table); }
+    void initialUpdate(Phonon& p) const noexcept { return sensor_.initialUpdate(p); }
     void scatterUpdate(Phonon& p) const noexcept { return sensor_.scatterUpdate(p); }
+    void updateEmitTables() noexcept;
     void updateHeatParams(const Phonon& p, std::size_t step) noexcept;
     void findTransitionSurface(Cell& other);
     void handleSurfaceCollision(Phonon& p, const Point& poi, double step_time) const noexcept;
@@ -51,7 +53,6 @@ private:
     // are allocated to different surface types as necessary
     std::array<CompositeSurface, 3> boundaries_;
 
-    // TODO: Portions of the main boundaries that are comprised of a different type of surfaces
     //std::vector<BoundarySurface> inner_surfaces_; // implement later if req'd
 
     [[nodiscard]] std::array<CompositeSurface, 3> buildCompositeSurfaces(double spec) noexcept;

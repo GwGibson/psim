@@ -7,12 +7,15 @@
 #include "Material.h"
 #include "SensorController.h"
 
+struct SensorMeasurements;
+
 class Sensor {
 public:
     enum class SimulationType {SteadyState, Periodic, Transient};
-    Sensor(std::size_t ID, const Material& material, std::size_t num_measurements, double t_init, SimulationType type);
+    Sensor(std::size_t ID, const Material& material, SimulationType type, std::size_t num_measurements, double t_init);
 
-    void initialUpdate(Phonon& p, const Material::Table* table) const noexcept;
+    void initialUpdate(Phonon& p, const Material::Table& table) const noexcept;
+    void initialUpdate(Phonon& p) const noexcept;
     void scatterUpdate(Phonon& p) const noexcept;
     void addToArea(double area) noexcept { area_covered_ += area; }
     // final temps vector is only needed for transient simulations -> included for all calls to keep a common interface
@@ -25,8 +28,8 @@ public:
     [[nodiscard]] double getInitTemp() const noexcept { return controller_->getInitTemp(); }
     [[nodiscard]] double getSteadyTemp(std::size_t step=0) const noexcept { return controller_->getSteadyTemp(step); }
     [[nodiscard]] double getArea() const noexcept { return area_covered_; }
-    [[nodiscard]] const auto& getFluxes() const noexcept { return inc_flux_; }
-    [[nodiscard]] const auto& getEnergies() const noexcept { return inc_energy_; }
+    [[nodiscard]] const std::vector<std::array<double, 2>>& getFluxes() const noexcept { return inc_flux_; }
+    [[nodiscard]] const std::vector<int>& getEnergies() const noexcept { return inc_energy_; }
 
     /**
      * Updates the heat parameters (inc_energy_ & inc_flux_) at the given measurement step
@@ -35,6 +38,7 @@ public:
      */
     void updateHeatParams(const Phonon& p, std::size_t step) noexcept;
     void reset() noexcept;
+    void updateTables() { controller_->updateTables(); }
 private:
     const std::size_t ID_;
     std::unique_ptr<SensorController> controller_;
