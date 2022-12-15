@@ -13,19 +13,17 @@ from typing import List
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
- 
-
-       
+import sys
+        
 class MatplotLibPlotter:
     
     def mp_flux(self, json_file, ss_file, outfile):
+        min_max = lambda x1, x2, x3: (min(x1,x2,x3), max(x1,x2,x3))
         midpoints = []
         
         md = deserialize(json_file)
-        x_max = 0
-        x_min = 1000
-        y_max = 0
-        y_min = 1000
+        x_max = y_max = sys.float_info.min
+        x_min = y_min = sys.float_info.max
         s_id = 0
         for sensor, triangles in md.cell_dict.items():
             next_id = sensor.id
@@ -34,16 +32,13 @@ class MatplotLibPlotter:
                 y_avg = (y_max + y_min)/2
                 midpoints.append((x_avg, y_avg))
                 s_id = next_id
-                x_max = 0
-                x_min = 1000
-                y_max = 0
-                y_min = 1000
+                x_max = y_max = sys.float_info.min
+                x_min = y_min = sys.float_info.max
             
             for t in triangles:
-                xh = max(t.p1.x, t.p2.x, t.p3.x)
-                xl = min(t.p1.x, t.p2.x, t.p3.x)
-                yh = max(t.p1.y, t.p2.y, t.p3.y)
-                yl = min(t.p1.y, t.p2.y, t.p3.y)
+                (xl, xh) = min_max(t.p1.x, t.p2.x, t.p3.x)
+                (yl, yh) = min_max(t.p1.y, t.p2.y, t.p3.y)
+                
                 if (xh > x_max):
                     x_max = xh
                 if (yh > y_max):
@@ -58,9 +53,7 @@ class MatplotLibPlotter:
         with open(outfile, 'w') as f:            
             for (mp, xf, yf) in zip(midpoints, xfs, yfs):
                 f.write(f'{mp[0]} {mp[1]} {xf} {yf}\n')
-            
-                
-    
+           
     def plot(self, json_file: str, ss_file: str = None, square_axes=True,
              outfile: str = None, flux_scale = 1, **kwargs):
         
