@@ -67,7 +67,7 @@ void Model::setSimulationType(SimulationType type, std::size_t step_interval) {
     outputManager_.setStepInterval(step_interval);
 }
 
-void Model::addMaterial(const std::string& material_name, Material material) {
+void Model::addMaterial(const std::string& material_name, const Material& material) {
     const auto exists = materials_.find(material_name);
     if (exists != std::end(materials_)) {
         throw std::runtime_error(std::string("A duplicate material name was detected.\n"));
