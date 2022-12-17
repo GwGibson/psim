@@ -47,7 +47,7 @@ public:
      * @param material_name - A string representing the name of the material
      * @param material - An object that specifies the properties of the material
      */
-    void addMaterial(const std::string& material_name, Material material);
+    void addMaterial(const std::string& material_name, const Material& material);
     /**
      * Adds a Sensor object to the model. Each sensor is linked to a number of cells so that not every cell
      * must independently track its own temperature and flux values in addition to scattering considerations.
