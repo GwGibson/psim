@@ -103,15 +103,15 @@ double Material::theoreticalEnergy(double temp, bool pseudo) const noexcept {
 }
 
 void Material::initializeTables(double low_temp, double high_temp, float temp_interval) {
-    const auto num_steps = static_cast<std::size_t>((high_temp - low_temp)/2.);
+    const auto num_steps = static_cast<std::size_t>((high_temp - low_temp) / temp_interval);
     temps_.resize(num_steps, 0.);
 
     std::generate(std::begin(temps_), std::end(temps_),
-                  [n = -1, &low_temp, &temp_interval]() mutable { return low_temp + temp_interval * (n+=1); });
+                  [n = -1., &low_temp, &temp_interval]() mutable { return low_temp + temp_interval * (n+=1); });
     temps_.push_back(high_temp);
 
     for (const auto& temp : temps_) {
-        // TODO: This can be optimized
+        // TODO: This can be optimized - but not too important since only called once
         Array la_base = phononDist(temp, Polar::LA);
         Array ta_base = phononDist(temp, Polar::TA);
         const auto heat_capacity = std::accumulate(std::cbegin(la_base), std::cend(la_base), 0.)
@@ -240,8 +240,8 @@ double Material::tauIInv(double freq) const noexcept {
 }
 
 std::size_t Material::getTempIndex(double temp) const noexcept {
-    return std::distance(std::cbegin(temps_), std::max_element(std::cbegin(temps_),
-                                              std::find_if(std::cbegin(temps_), std::cend(temps_),
-                                              [&temp](double temperature) { return temp >= temperature;})));
+    const auto index = std::distance(std::cbegin(temps_), std::lower_bound(std::cbegin(temps_), std::cend(temps_), temp));
+    const auto maxIndex = temps_.size()-1;
+    return (index > maxIndex) ? maxIndex : index;
 }
 
