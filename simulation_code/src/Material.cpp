@@ -200,35 +200,37 @@ Array Material::phononDist(double temp, Polar polarization) const {
     return bose_einstein;
 }
 
+// Normal scattering
 double Material::tauNInv(double temp, double freq, Polar polarization) const noexcept {
     const auto tau_inv = [&](){
         switch(polarization) {
             case Polar::LA:
                 return b_l_ * freq * freq * pow(temp, 3);
-                case Polar::TA:
-                    if (freq < w_) {
-                        return b_tn_ * freq * pow(temp, 4);
-                    }
-                    return 0.;
-                    default:
-                        return 0.;
+            case Polar::TA:
+                if (freq < w_) {
+                    return b_tn_ * freq * pow(temp, 4);
+                }
+                return 0.;
+            default:
+                return 0.;
         }
     }();
     return tau_inv;
 }
 
+// Umklapp scattering
 double Material::tauUInv(double temp, double freq, Polar polarization) const noexcept {
     const auto tau_inv = [&](){
         switch(polarization) {
             case Polar::LA:
                 return b_l_ * freq * freq * pow(temp, 3);
-                case Polar::TA:
-                    if (freq >= w_) {
-                        return b_tu_ * freq * freq / sinh(HBAR * freq / (temp * BOLTZ));
-                    }
-                    return 0.;
-                    default:
-                        return 0.;
+            case Polar::TA:
+                if (freq >= w_) {
+                    return b_tu_ * freq * freq / sinh(HBAR * freq / (temp * BOLTZ));
+                }
+                return 0.;
+            default:
+                return 0.;
         }
     }();
     return tau_inv;
