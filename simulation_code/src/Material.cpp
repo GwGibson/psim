@@ -73,12 +73,6 @@ std::pair<std::size_t, Polar> Material::freqIndex(const Table& dist) noexcept {
     return {high, Utils::urand() <= dist[high].second ? Polar::LA : Polar::TA};
 }
 
-std::size_t Material::getFreqIndex(double frequency) const noexcept {
-    return std::distance(std::cbegin(frequencies_), std::max_element(std::cbegin(frequencies_),
-                                                                     std::find_if(std::cbegin(frequencies_), std::cend(frequencies_),
-                                                                                  [&frequency](double freq) { return freq >= frequency;})));
-}
-
 double Material::getFreq(std::size_t index) const noexcept {
     return (full_simulation_) ? frequencies_[index] : frequencies_[index] + (2. * Utils::urand() - 1.) * freq_width_ / 2.;
 }
