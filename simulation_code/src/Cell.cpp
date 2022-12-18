@@ -15,6 +15,7 @@ Cell::Cell(Cell::Triangle cell, Sensor& sensor, double spec)
     sensor_.addToArea(getArea());
 }
 
+// Checks if an incoming cell is valid if this cell already exists in the model
 void Cell::validate(const Cell& other) const {
     if (cell_.intersects(other.cell_)) {
         throw IntersectError(this->cell_, other.cell_);
@@ -27,6 +28,8 @@ void Cell::validate(const Cell& other) const {
     }
 }
 
+// Sets an emitting surface on the edge of this cell based on the coordinates of line
+// returns false if the incoming line is not a valid location in this cell (the line is not part of the cell surfaces)
 bool Cell::setEmitSurface(const Line& line, double temp, double duration, double start_time) {
     const int norm_sign = (cell_.isClockwise()) ? 1 : -1;
     for (auto& boundary : boundaries_) {
@@ -37,15 +40,19 @@ bool Cell::setEmitSurface(const Line& line, double temp, double duration, double
     return false;
 }
 
+// Gets this initial amount of energy in this cell based on the cell starting temperature and size
 double Cell::getInitEnergy(double t_eq) const noexcept {
     const double init_energy = getArea() * sensor_.getHeatCapacity();
     return (t_eq == 0.) ? init_energy : init_energy * std::fabs(getInitTemp() - t_eq);
 }
 
+// Gets the amount of energy that is emitted from surfaces contained in this cell over the duration of the simulation
+// Will be 0 if the cell has no emitting/isothermal surfaces
 double Cell::getEmitEnergy(double t_eq) const noexcept {
     double emit_energy = 0.;
     for (const auto& surface : getBoundaries()) {
         const auto& emit_surfaces = surface.getEmitSurfaces();
+        // sum the energy of all the emitting surfaces contained within this cell
         emit_energy += std::transform_reduce(std::execution::seq, std::cbegin(emit_surfaces),
                                              std::cend(emit_surfaces), 0., std::plus{}, [&](const auto& sub_surface) {
             const auto temp = sub_surface.getTemp();
@@ -57,14 +64,18 @@ double Cell::getEmitEnergy(double t_eq) const noexcept {
     return emit_energy;
 }
 
-
+// Updates the tables the emitting/isothermal surfaces use to generate phonons. Since the emitting surfaces
+// are at a constant temperature for the duration of the simulation, this is only called once during the initialization
+// phase and the tables are generated using the emitting temperature of whichever emitting surfaces are contained
+// in the cell
 void Cell::updateEmitTables() noexcept {
     for (auto& surface : boundaries_) {
         surface.updateEmitSurfaceTables();
     }
 }
 
-
+// The incoming phonon contributes its energy & flux to the sensor that is linked to this cell. The step refers to the
+// time frame where this contribution occurs
 void Cell::updateHeatParams(const Phonon& p, std::size_t step) noexcept {
     sensor_.updateHeatParams(p, step);
 }
@@ -90,6 +101,9 @@ void Cell::findTransitionSurface(Cell& other) {
     }
 }
 
+// Handles the interaction of a phonon colliding with the surface in which poi is located.
+// The step_time is only needed for transient simulations. It is used to check whether a surface
+// is currently acting as an emitting surface or whether it is currently acting as a boundary surface.
 void Cell::handleSurfaceCollision(Phonon& p, const Point& poi, double step_time) const noexcept {
     for (const auto& boundary : boundaries_) {
         if (boundary.contains(poi)) {
