@@ -14,7 +14,7 @@ namespace {
     constexpr std::size_t BUILDER_MAX_PHONONS{100'000};
     // Consider phonon velocity to be 0 in this direction if it is less than this value. Prevents some FP issues
     // Phonon would move at most 5 nm in this direction over a 50ns simulation, so this is safe to do in most cases
-    // Should perhaps be scaled based on simulation settings (step_time_ and cell dimensions) but not really necessary
+    // Should perhaps be scaled based on simulation settings (step_time_ and cell dimensions)
     constexpr double VELOCITY_EPS{0.01};
     // Prevent phonons from endlessly bouncing in tight corners. Consider scaling this based on step_time_?
     constexpr std::size_t MAX_COLLISIONS{100};
