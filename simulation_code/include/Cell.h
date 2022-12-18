@@ -27,6 +27,8 @@ public:
     [[nodiscard]] std::array<Line, 3> getBoundaryLines() const noexcept;
 
     [[nodiscard]] Point getRandPoint(double r1, double r2) const noexcept { return cell_.getRandPoint(r1, r2); }
+    // Throws if the incoming cell overlaps, contains or is contained within this cell - both cells cannot coexist
+    // in the same model
     void validate(const Cell& other) const;
     [[nodiscard]] bool setEmitSurface(const Line& line, double temp, double duration, double start_time);
 
