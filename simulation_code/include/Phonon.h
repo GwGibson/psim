@@ -10,7 +10,7 @@ class Cell;
 
 class Phonon {
 public:
-    constexpr std::size_t NUM_RELAX_RATES = 3;
+    static constexpr std::size_t NUM_RELAX_RATES = 3;
     enum class Polarization { LA, TA };
 
     using RelaxRates = std::array<double, NUM_RELAX_RATES>;
