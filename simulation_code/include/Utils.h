@@ -8,7 +8,7 @@ namespace Utils {
     // Generates a random number from a uniform distribution over [0,1].
     inline double urand() noexcept {
         static std::random_device rd;
-        static thread_local std::mt19937 generator(10);
+        static thread_local std::mt19937 generator(rd());
         std::uniform_real_distribution<double> dist(0., std::nextafter(1.0, 2.0));
         return dist(generator);
     }
