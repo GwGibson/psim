@@ -99,12 +99,12 @@ public:
     void exportResults(const fs::path& filepath, double time) const;
 private:
     SimulationType sim_type_{SimulationType::SteadyState};
-    const std::size_t num_cells_;
-    const std::size_t measurement_steps_;
-    const double simulation_time_;
-    const std::size_t num_phonons_;
+    std::size_t num_cells_;
+    std::size_t measurement_steps_;
+    double simulation_time_;
+    std::size_t num_phonons_;
     double t_eq_{0.}; // Changes as the system evolves between runs
-    const bool phasor_sim_;
+    bool phasor_sim_;
     std::size_t start_step_ {0}; // 0 for SS simulations -> measurements vectors are scaled down in the sensors
 
     ModelSimulator simulator_;

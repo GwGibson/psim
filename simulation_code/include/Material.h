@@ -44,17 +44,17 @@ public:
     [[nodiscard]] double theoreticalEnergy(double temp, bool pseudo=false) const noexcept;
     void initializeTables(double low_temp, double high_temp, float temp_interval);
 private:
-    const std::size_t id_;
-    const double b_l_;
-    const double b_tn_;
-    const double b_tu_;
-    const double b_i_;
-    const double w_; // Cutoff for TA Umklapp scattering
+    std::size_t id_;
+    double b_l_;
+    double b_tn_;
+    double b_tu_;
+    double b_i_;
+    double w_; // Cutoff for TA Umklapp scattering
 
-    const double w_max_la_; // Maximum frequency of LA phonons that can exist in this material
-    const double w_max_ta_;
+    double w_max_la_; // Maximum frequency of LA phonons that can exist in this material
+    double w_max_ta_;
 
-    const double freq_width_; // Width of frequency bin.
+    double freq_width_; // Width of frequency bin.
     bool full_simulation_{false};
 
     Array frequencies_{0.};

@@ -48,7 +48,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const Cell& cell);
 private:
-    const Triangle cell_;
+    Triangle cell_;
     Sensor& sensor_;
 
     // Unused space on each line defaults to a boundary surface and portions of this boundary surface
@@ -75,16 +75,16 @@ class IntersectError : public CellError {
 public:
     IntersectError(Geometry::Triangle existing, Geometry::Triangle incoming);
 private:
-    const Geometry::Triangle existing_;
-    const Geometry::Triangle incoming_;
+    Geometry::Triangle existing_;
+    Geometry::Triangle incoming_;
 };
 
 class OverlapError : public CellError {
 public:
     OverlapError(Geometry::Triangle bigger, Geometry::Triangle smaller);
 private:
-    const Geometry::Triangle bigger_;
-    const Geometry::Triangle smaller_;
+    Geometry::Triangle bigger_;
+    Geometry::Triangle smaller_;
 };
 
 

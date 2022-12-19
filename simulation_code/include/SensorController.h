@@ -29,8 +29,8 @@ public:
     virtual void reset() noexcept = 0;
 protected:
     const Material& material_;
-    const double t_init_;
-    const std::size_t num_measurements_; // For transient surfaces only
+    double t_init_;
+    std::size_t num_measurements_; // For transient surfaces only
 
     double t_steady_{0.}; // Steady state temperature of the cell. Used to set the energy tables & heat_capacity_
     double heat_capacity_{0.}; // Energy per unit volume in full simulations - heat capacity in deviational simulations

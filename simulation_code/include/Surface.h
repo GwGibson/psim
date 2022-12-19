@@ -55,10 +55,10 @@ public:
     void updateTable() { emit_table_ = material_.emitTable(temp_); }
 protected:
     const Material& material_;
-    const double temp_;
+    double temp_;
     const Material::Table* emit_table_{nullptr};
-    const double duration_;
-    const double start_time_;
+    double duration_;
+    double start_time_;
 };
 
 // Can act as a boundary surface during material interface interactions

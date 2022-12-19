@@ -21,8 +21,8 @@ public:
 private:
     std::vector<BuilderObj> phonon_builders_;
     std::vector<double> step_times_;
-    const double step_time_;
-    const bool phasor_sim_;
+    double step_time_;
+    bool phasor_sim_;
     std::size_t step_adjustment_{0};
     std::size_t total_phonons_{0};
 

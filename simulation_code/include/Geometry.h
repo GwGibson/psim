@@ -28,14 +28,14 @@ namespace Geometry {
 
     struct Line {
         Line(Point p1, Point p2);
-        const Point p1;
-        const Point p2;
+        Point p1;
+        Point p2;
 
         // maybe only store the length and bounding box
-        const double slope;
-        const double intercept;
-        const PointPair boundingBox;
-        const double length;
+        double slope;
+        double intercept;
+        PointPair boundingBox;
+        double length;
 
         [[nodiscard]] PointPair getPoints() const noexcept { return {p1, p2}; }
 
@@ -59,9 +59,9 @@ namespace Geometry {
 
     struct Triangle {
         Triangle(Point p1, Point p2, Point p3);
-        const Point p1;
-        const Point p2;
-        const Point p3;
+        Point p1;
+        Point p2;
+        Point p3;
 
         [[nodiscard]] std::array<Line, 3> lines() const noexcept;
 
@@ -93,14 +93,14 @@ class LineError : public ShapeError {
 public:
     explicit LineError(Geometry::Line line);
 private:
-    const Geometry::Line line_;
+    Geometry::Line line_;
 };
 
 class TriangleError : public ShapeError {
 public:
     explicit TriangleError(Geometry::Triangle triangle);
 private:
-    const Geometry::Triangle triangle_;
+    Geometry::Triangle triangle_;
 };
 
 #endif //GEOMETRY_GEOMETRY_H

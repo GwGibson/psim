@@ -53,8 +53,8 @@ public:
         return os;
     }
 private:
-    const signed char sign_; // Determines how the phonon energy/flux is handled (-1, 1)
-    const double lifetime_;
+    signed char sign_; // Determines how the phonon energy/flux is handled (-1, 1)
+    double lifetime_;
     std::size_t lifestep_{0};
 
     double px_{0.};

@@ -40,7 +40,7 @@ public:
     void reset() noexcept;
     void updateTables() { controller_->updateTables(); }
 private:
-    const std::size_t ID_;
+    std::size_t ID_;
     std::unique_ptr<SensorController> controller_;
     double area_covered_{0.};
 

@@ -10,7 +10,7 @@ public:
     // The temperature bounds and t_eq / eff_energy parameters cannot be set in the constructor
     // as they are contingent on other aspects of the model and cannot be set until the model is ready
     // to start the simulation
-    void setBounds(double ub, double lb) noexcept { ub_ = ub; lb_ = lb; }
+    void setBounds(double lb, double ub) noexcept { lb_ = lb; ub_ = ub; }
     void setParams(double t_eq, double eff_energy) noexcept;
     [[nodiscard]] SensorMeasurements scaleHeatParams(const Sensor& sensor) const noexcept;
     [[nodiscard]] double getFinalTemp(const Sensor& sensor, std::size_t start_step) const noexcept;
