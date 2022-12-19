@@ -44,7 +44,7 @@ void Surface::boundaryHandlePhonon(Phonon& p) const noexcept {
 EmitSurface::EmitSurface(Line surface_line, Cell& cell, double specularity, int norm_sign,
                          const Material& mat, double temp, double duration, double start_time)
     : Surface{std::move(surface_line), cell, specularity, norm_sign},
-      temp_{temp}, duration_{duration}, start_time_{start_time}, material_{mat}
+      material_{mat}, temp_{temp}, duration_{duration}, start_time_{start_time}
     {}
 
 void EmitSurface::handlePhonon(Phonon& p, double step_time) const noexcept {

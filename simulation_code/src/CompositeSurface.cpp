@@ -38,19 +38,19 @@ bool CompositeSurface::addTransitionSurface(const Line& surface_line, Cell& cell
 
 void CompositeSurface::handlePhonon(Phonon& p, const Point& poi, double step_time) const noexcept {
     // Check to see if the phonon interacts with sub-surfaces
-    for (const auto& ts : transition_sub_surfaces_) {
+    for (const auto& ts : transition_sub_surfaces_) { // transition surfaces
         if (ts.getSurfaceLine().contains(poi)) {
             ts.handlePhonon(p);
             return;
         }
     }
-    for (const auto& es : emit_sub_surfaces_) {
+    for (const auto& es : emit_sub_surfaces_) { // emitting surfaces
         if (es.getSurfaceLine().contains(poi)) {
             es.handlePhonon(p, step_time);
             return;
         }
     }
-    // If not, it must have hit the main surface
+    // If not, it must have hit the main (boundary) surface
     main_surface_.boundaryHandlePhonon(p);
 }
 

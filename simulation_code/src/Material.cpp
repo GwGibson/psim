@@ -240,4 +240,3 @@ std::size_t Material::getTempIndex(double temp) const noexcept {
     const auto maxIndex = temps_.size()-1;
     return (index > maxIndex) ? maxIndex : index;
 }
-

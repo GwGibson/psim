@@ -8,7 +8,7 @@
 
 namespace {
     // Maximum number of simulations resets
-    constexpr std::size_t MAX_ITERS{7};
+    constexpr std::size_t MAX_ITERS{2};
     // Threshold (percentage) of sensors that must be stable for the system to be considered stable
     constexpr std::size_t RESET_THRESHOLD{90};
     // Threshold (percentage*1000) that t_eq must be within between runs for the system to be considered stable
@@ -203,7 +203,7 @@ std::pair<double, double> Model::setTemperatureBounds() noexcept {
     }
     const auto [min, max] = std::minmax_element(std::cbegin(temperatures), std::cend(temperatures));
     const auto bound = (phasor_sim_) ? PHASOR_TEMP_BOUND_EPS : TEMP_BOUND_EPS;
-    interpreter_.setBounds(*max+bound, std::max(*min-bound, 0.));
+    interpreter_.setBounds(std::max(*min-bound, 0.), *max+bound);
     return {*min, *max};
 }
 
